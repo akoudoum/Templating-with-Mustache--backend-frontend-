@@ -1,7 +1,12 @@
-# Hi Everyone! ☺
+Small SLIM app with sharing template engine between frontend and backend.
 
-## [This repo has moved!](https://github.com/h5bp/html5-boilerplate)
+The frontend of this App was originally developed by Daniele Marchesini (https://twitter.com/#!/dannymarke)
+for a great presentation about micro-templating. Thx Dan. =)
+ 
 
-# [HTML5 Boilerplate Github](https://github.com/h5bp/html5-boilerplate)
+This is just a test, don't fork it.
 
-Thank youuu
+TODO:
+
+* reorganize the file structure
+* manage layout/partials with mustache
