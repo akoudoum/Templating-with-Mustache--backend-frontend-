@@ -13,8 +13,12 @@ require 'models/Photo.php';
 //View Engine
 require 'Slim/MustacheView.php'; /* custom -> https://github.com/codeguy/Slim-Extras/tree/master/Views */
 
-
+//Configure DB and View
+ORM::configure('mysql:host=localhost;dbname=photos');
+ORM::configure('username', 'root');
+ORM::configure('password', 'root');
 MustacheView::$mustacheDirectory = 'Slim';
+
 
 $app = new Slim(array(
     'view' => 'MustacheView',
@@ -28,92 +32,57 @@ $app->get('/', function() use($app){
 $app->get('/photos', 'getPhotos');
 $app->get('/photos/:id','getPhoto');
 $app->post('/photos', 'addPhoto');
-$app->delete('/photos/:id',	'deletePhoto');
 
 $app->run();
 
 function getPhotos() {
 	$app = Slim::getInstance();
-	$sql = "select * FROM photos ";
-	try {
-		$db = getConnection();
-		$stmt = $db->query($sql);  
-		$photos = $stmt->fetchAll(PDO::FETCH_OBJ);
-		$db = null;
-		
+	$photos = Model::factory('Photo')->find_many();
+	$photos_json = Array();
+	foreach($photos as $photo) {
+		array_push($photos_json,$photo->as_array());
+	}
+	
+	if($photos)	{
 		if(isAjax($app->request()))
-			echo '{"photos": ' . json_encode($photos) . '}';
+			echo '{"photos": ' . json_encode($photos_json) . '}';
 		else
-			return $app->render('list.html', array('photos' => $photos));	
-	} catch(PDOException $e) {
-		echo '{"error":{"text":'. $e->getMessage() .'}}'; 
+			return $app->render('list.html', array('photos' => $photos));
+	}
+	else {	
+		$app->response()->status(404);
+		$app->render('404.html'); 
 	}
 }
 function getPhoto($name) {
 	$app = Slim::getInstance();
-	$sql = "select * FROM photos WHERE name=:name";
-	try {
-		$db = getConnection();
-		$stmt = $db->prepare($sql);  
-		$stmt->bindParam("name", $name);
-		$stmt->execute();
-		$photos = $stmt->fetchAll(PDO::FETCH_OBJ);
-		$db = null;
-		
+	$photo = Model::factory('Photo')->where_equal('name', $name)->find_one();
+	if($photo)	{
 		if(isAjax($app->request()))
-			echo '{"photos": ' . json_encode($photos) . '}';
+			echo '{"photos": ' . json_encode($photo->as_array()) . '}';
 		else
-			return $app->render('list.html', array('photos' => $photos));	
-	} catch(PDOException $e) {
-		echo '{"error":{"text":'. $e->getMessage() .'}}'; 
+			return $app->render('list.html', array('photos' => $photo));
+	}
+	else {		
+		$app->response()->status(404);
+		$app->render('404.html');
 	}
 }
 
 function addPhoto() {
 	error_log('addPhoto\n', 3, '/var/tmp/php.log');
 	$request = Slim::getInstance()->request();
-	$photo = json_decode($request->getBody());
-	$sql = "INSERT INTO photos (name, profile_image_url,from_user,text) VALUES (:name, :profile_image_url,:from_user,:text)";
-	try {
-		$db = getConnection();
-		$stmt = $db->prepare($sql);  
-		$stmt->bindParam("name", $photo->name);
-		$stmt->bindParam("profile_image_url", $photo->profile_image_url);
-		$stmt->bindParam("from_user", $photo->from_user);
-		$stmt->bindParam("text", $photo->text);
-		$stmt->execute();
-		$photo->id = $db->lastInsertId();
-		$db = null;
-		echo json_encode($photo); 
-	} catch(PDOException $e) {
-		error_log($e->getMessage(), 3, '/var/tmp/php.log');
-		echo '{"error":{"text":'. $e->getMessage() .'}}'; 
-	}
+	$photo 	 = Model::factory('Photo')->create();
+	
+	$photo->name = $app->request()->post('name');
+	$photo->profile_image_url = $app->request()->post('profile_image_url');
+	$photo->from_user = $app->request()->post('from_user');
+	$photo->text = $app->request()->post('text');
+	
+	$photo->save();
+	
+	return "Success";
 }
 
-function deletePhoto($id) {
-	$sql = "DELETE FROM photos WHERE id=:id";
-	try {
-		$db = getConnection();
-		$stmt = $db->prepare($sql);  
-		$stmt->bindParam("id", $id);
-		$stmt->execute();
-		$db = null;
-	} catch(PDOException $e) {
-		echo '{"error":{"text":'. $e->getMessage() .'}}'; 
-	}
-}
-
-
-
-function getConnection() {
-	$dbhost="localhost";
-	$dbuser="root";
-	$dbpass="root";
-	$dbname="photos";
-	$dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);	
-	$dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	return $dbh;
-}
 
 ?>
