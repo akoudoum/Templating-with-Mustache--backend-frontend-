@@ -8,7 +8,7 @@ require 'Paris/idiorm.php';
 require 'Paris/paris.php';
 
 // Models
-require 'models/Photo.php';
+require 'models/photo.php';
 
 //View Engine
 require 'Slim/MustacheView.php'; /* custom -> https://github.com/codeguy/Slim-Extras/tree/master/Views */
