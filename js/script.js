@@ -8,7 +8,7 @@ require.config({
     }
 });
 
-require(["jquery","text!views/list.html","history","mustache","js/plugins.js"],
+require(["order!jquery","text!views/list.html","order!history","mustache","js/plugins.js"],
     function($,html) {
     	
     	var history = window.History;
